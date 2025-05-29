@@ -1,9 +1,21 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import pickle
 
 # Configuración de la página
 st.set_page_config(page_title="Interfaz Simple", page_icon="👋", layout="wide")
+
+# Cargar el modelo desde el archivo
+try:
+    with open('modelo_entrenado (1).pkl', 'rb') as file:
+        model = pickle.load(file)
+except FileNotFoundError:
+    st.error("El archivo 'modelo_entrenado (1).pkl' no se encuentra. Asegúrate de colocarlo en el mismo directorio que este script.")
+    st.stop()
+except Exception as e:
+    st.error(f"Error al cargar el modelo: {e}")
+    st.stop()
 
 # Título
 st.title("Hi")
@@ -38,44 +50,6 @@ st.subheader("Tipo de Habitación")
 room_types = ['Entire home/apt', 'Hotel room', 'Private room', 'Shared room']
 room_type = st.selectbox("Selecciona el tipo de habitación", room_types)
 
-# Coeficientes de la regresión lineal (extraídos del resumen proporcionado)
-coeficientes = {
-    'const': 11.4817,
-    'accommodates': 1.8663,
-    'bathrooms': 0.5437,
-    'bedrooms': 0.2943,
-    'beds': -0.0740,
-    'minimum_nights': -0.0421,
-    'num_comodidades': 0.3594,
-    'longitud_descripcion': -0.0918,
-    'longitud_resumen_barrio': 0.0790,
-    'amenities_tiene_wifi': 0.3481,
-    'amenities_tiene_coffee': -0.1054,
-    'amenities_tiene_kitchen': -0.9269,
-    'amenities_tiene_washer': -0.2155,
-    'amenities_tiene_clothing': -0.4224,
-    'barrio_tiene_restaurants': 0.1346,
-    'ciudad_Euskadi': -0.0219,
-    'ciudad_Girona': -0.8543,
-    'ciudad_Madrid': -0.4808,
-    'ciudad_Mallorca': 0.4619,
-    'ciudad_Menorca': -0.1331,
-    'ciudad_Málaga': -0.9250,
-    'ciudad_Sevilla': -0.3763,
-    'ciudad_Valencia': -0.9442,
-    'room_type_Hotel room': 0.2961,
-    'room_type_Private room': -2.2214,
-    'room_type_Shared room': -3.4089
-}
-
-# Función para realizar la predicción manual
-def predecir_precio(input_data, coeficientes):
-    precio = coeficientes['const']
-    for feature in coeficientes:
-        if feature != 'const':
-            precio += coeficientes[feature] * input_data.get(feature, 0)
-    return precio
-
 # Opciones: Mostrar mensaje o realizar predicción
 st.subheader("Opciones")
 opcion = st.radio("Selecciona una acción:", ["Mostrar mensaje 'hi'", "Realizar predicción"])
@@ -85,36 +59,42 @@ if st.button("Ejecutar"):
     if opcion == "Mostrar mensaje 'hi'":
         st.write("hi")
     else:
-        # Crear un diccionario con las características
-        input_data = {
-            'accommodates': accommodates,
-            'bathrooms': bathrooms,
-            'beds': beds,
-            'bedrooms': bedrooms,
-            'minimum_nights': minimum_nights,
-            'num_comodidades': num_comodidades,
-            'longitud_descripcion': longitud_descripcion,
-            'longitud_resumen_barrio': longitud_resumen_barrio,
-            'amenities_tiene_wifi': amenities_tiene_wifi,
-            'amenities_tiene_coffee': amenities_tiene_coffee,
-            'amenities_tiene_kitchen': amenities_tiene_kitchen,
-            'amenities_tiene_washer': amenities_tiene_washer,
-            'amenities_tiene_clothing': amenities_tiene_clothing,
-            'barrio_tiene_restaurants': barrio_tiene_restaurants,
-            f'ciudad_{city}': 1,
-            f'room_type_{room_type}': 1
-        }
+        # Crear un DataFrame con las características
+        input_data = pd.DataFrame({
+            'accommodates': [accommodates],
+            'bathrooms': [bathrooms],
+            'beds': [beds],
+            'bedrooms': [bedrooms],
+            'minimum_nights': [minimum_nights],
+            'num_comodidades': [num_comodidades],
+            'longitud_descripcion': [longitud_descripcion],
+            'longitud_resumen_barrio': [longitud_resumen_barrio],
+            'amenities_tiene_wifi': [amenities_tiene_wifi],
+            'amenities_tiene_coffee': [amenities_tiene_coffee],
+            'amenities_tiene_kitchen': [amenities_tiene_kitchen],
+            'amenities_tiene_washer': [amenities_tiene_washer],
+            'amenities_tiene_clothing': [amenities_tiene_clothing],
+            'barrio_tiene_restaurants': [barrio_tiene_restaurants],
+            'ciudad': [city],
+            'room_type': [room_type]
+        })
         # Realizar la predicción
-        precio_predicho = predecir_precio(input_data, coeficientes)
-        st.success(f"El precio predicho es: {precio_predicho:.2f} €")
+        try:
+            precio_predicho_sqrt = model.predict(input_data)
+            precio_predicho = precio_predicho_sqrt[0] ** 2  # Deshacer la transformación raíz cuadrada
+            st.success(f"El precio predicho es: {precio_predicho:.2f} €")
+        except Exception as e:
+            st.error(f"Error al hacer la predicción: {e}")
 
 # Instrucciones
 st.markdown("---")
 st.write("""
 ### Instrucciones
-1. Ingresa los valores de las características numéricas, selecciona una ciudad y un tipo de habitación.
-2. Elige una acción: mostrar el mensaje 'hi' o realizar una predicción.
-3. Haz clic en "Ejecutar" para ver el resultado.
-4. Instala las dependencias: `pip install streamlit pandas numpy`.
-5. Ejecuta la aplicación: `streamlit run main.py`.
+1. Descarga el archivo `modelo_entrenado (1).pkl` desde tu repositorio GitHub (asotogarc/prueba).
+2. Colócalo en el mismo directorio que este script (`main.py`).
+3. Instala las dependencias: `pip install streamlit pandas numpy scikit-learn`.
+4. Ejecuta la aplicación: `streamlit run main.py`.
+5. Ingresa los valores de las características, selecciona una ciudad y un tipo de habitación.
+6. Elige una acción: mostrar el mensaje 'hi' o realizar una predicción.
+7. Haz clic en "Ejecutar" para ver el resultado.
 """)
