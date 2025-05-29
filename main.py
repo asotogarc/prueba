@@ -1,7 +1,8 @@
 import streamlit as st
 import pickle
 import numpy as np
-import xgboost as xgb  # Importar xgboost explícitamente
+import pandas as pd
+import xgboost as xgb  # Para evitar el error de xgboost
 
 # Cargar el modelo
 try:
@@ -30,41 +31,23 @@ bedrooms = st.number_input("Bedrooms (dormitorios)", min_value=0.0, step=1.0, va
 minimum_nights = st.number_input("Minimum Nights (noches mínimas)", min_value=0.0, step=1.0, value=1.0)
 num_comodidades = st.number_input("Num Comodidades (número de comodidades)", min_value=0.0, step=1.0, value=0.0)
 
-# Selección de la ciudad (característica categórica)
+# Selección de la ciudad (como variable categórica única)
 st.subheader("Ciudad")
 cities = ['Mallorca', 'Valencia', 'Girona', 'Málaga', 'Madrid', 'Menorca', 'Sevilla', 'Euskadi']
 city = st.selectbox("Selecciona la ciudad", cities)
 
 # Botón para realizar la predicción
 if st.button("Predecir Precio"):
-    # Codificación one-hot para la ciudad
-    ciudad_Mallorca = 1 if city == 'Mallorca' else 0
-    ciudad_Valencia = 1 if city == 'Valencia' else 0
-    ciudad_Girona = 1 if city == 'Girona' else 0
-    ciudad_Málaga = 1 if city == 'Málaga' else 0
-    ciudad_Madrid = 1 if city == 'Madrid' else 0
-    ciudad_Menorca = 1 if city == 'Menorca' else 0
-    ciudad_Sevilla = 1 if city == 'Sevilla' else 0
-    ciudad_Euskadi = 1 if city == 'Euskadi' else 0
-
-    # Crear el vector de características en el orden correcto
-    input_data = [
-        accommodates,
-        bathrooms,
-        ciudad_Mallorca,
-        ciudad_Valencia,
-        ciudad_Girona,
-        ciudad_Málaga,
-        beds,
-        bedrooms,
-        ciudad_Madrid,
-        ciudad_Menorca,
-        ciudad_Sevilla,
-        ciudad_Euskadi,
-        minimum_nights,
-        num_comodidades
-    ]
-    input_data = np.array([input_data])
+    # Crear un DataFrame con las características
+    input_data = pd.DataFrame({
+        'accommodates': [accommodates],
+        'bathrooms': [bathrooms],
+        'beds': [beds],
+        'bedrooms': [bedrooms],
+        'minimum_nights': [minimum_nights],
+        'num_comodidades': [num_comodidades],
+        'ciudad': [city]  # Ciudad como variable categórica única
+    })
 
     # Realizar la predicción
     try:
