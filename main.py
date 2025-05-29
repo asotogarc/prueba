@@ -14,7 +14,7 @@ col1, col2 = st.columns(2)
 with col1:
     accommodates = st.number_input("Accommodates (capacidad)", min_value=0.0, step=1.0, value=2.0)
     bathrooms = st.number_input("Bathrooms (baños)", min_value=0.0, step=0.5, value=1.0)
-    beds = st,number_input("Beds (camas)", min_value=0.0, step=1.0, value=1.0)
+    beds = st.number_input("Beds (camas)", min_value=0.0, step=1.0, value=1.0)
     bedrooms = st.number_input("Bedrooms (dormitorios)", min_value=0.0, step=1.0, value=1.0)
     minimum_nights = st.number_input("Minimum Nights (noches mínimas)", min_value=0.0, step=1.0, value=1.0)
     num_comodidades = st.number_input("Num Comodidades (número de comodidades)", min_value=0.0, step=1.0, value=0.0)
